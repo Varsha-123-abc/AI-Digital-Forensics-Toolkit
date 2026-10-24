@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forensic Report — {{ report.case.case_id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+            color: #202938;
+            line-height: 1.6;
+        }
+        header, section {
+            border: 1px solid #d7dde5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        header { background: #f3f6fa; }
+        h1, h2 { color: #17365d; }
+        .muted { color: #596579; }
+        .hash { overflow-wrap: anywhere; }
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            background: #f5f7fa;
+            padding: 12px;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-wrap: anywhere;
+        }
+        th, td {
+            text-align: left;
+            vertical-align: top;
+            border: 1px solid #d7dde5;
+            padding: 9px;
+        }
+        th { background: #f3f6fa; }
+        @media print {
+            body { max-width: none; margin: 0; }
+            header, section { break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Digital Forensics Case Report</h1>
+    <p><strong>Case ID:</strong> {{ report.case.case_id }}</p>
+    <p><strong>Generated (UTC):</strong>
+       {{ report.report_generated_at_utc }}</p>
+    <p class="muted">
+        This report summarizes records stored in the toolkit.
+        It is not, by itself, proof of a forensic conclusion.
+    </p>
+</header>
+
+<section>
+    <h2>1. Case overview</h2>
+    <p><strong>Title:</strong> {{ report.case.title }}</p>
+    <p><strong>Description:</strong>
+       {{ report.case.description or "No description provided." }}</p>
+    <p><strong>Status:</strong> {{ report.case.status }}</p>
+    <p><strong>Created (UTC):</strong> {{ report.case.created_at }}</p>
+    <p><strong>Updated (UTC):</strong> {{ report.case.updated_at }}</p>
+</section>
+
+<section>
+    <h2>2. Evidence inventory ({{ report.evidence|length }})</h2>
+    {% if report.evidence %}
+        {% for item in report.evidence %}
+            <article>
+                <h3>{{ item.file_name }}</h3>
+                <p><strong>Evidence ID:</strong> {{ item.evidence_id }}</p>
+                <p><strong>Recorded path:</strong>
+                   <code>{{ item.file_path }}</code></p>
+                <p><strong>Size:</strong> {{ item.file_size_bytes }} bytes</p>
+                <p><strong>MIME type guess:</strong>
+                   {{ item.mime_type_guess }}</p>
+                <p><strong>Collected (UTC):</strong>
+                   {{ item.collected_at }}</p>
+                <p><strong>SHA-256:</strong></p>
+                <code class="hash">{{ item.sha256 }}</code>
+               {% set integrity = report.evidence_integrity_statuses.get(item.evidence_id, {}) %}
+<p><strong>Integrity status:</strong>
+    {{ integrity.get("status", "Not verified") }}</p>
+
+{% if integrity.get("message") %}
+<p><strong>Verification details:</strong>
+    {{ integrity.get("message") }}</p>
+{% endif %}
+
+{% if integrity.get("event_time") %}
+<p><strong>Last verification (UTC):</strong>
+    {{ integrity.get("event_time") }}</p>
+{% endif %}
+
+                <h4>Metadata and indicator findings</h4>
+                <pre>{{ item.metadata | tojson(indent=2) }}</pre>
+            </article>
+            {% if not loop.last %}<hr>{% endif %}
+        {% endfor %}
+    {% else %}
+        <p>No evidence is registered to this case.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>3. Integrity and verification summary</h2>
+
+    <h3>Audit-chain verification</h3>
+    {% if report.audit_chain_verification.valid %}
+        <p><strong>Status:</strong> Valid</p>
+    {% else %}
+        <p><strong>Status:</strong> Verification failed</p>
+        <p><strong>Problem:</strong>
+            {{ report.audit_chain_verification.error or "Unknown verification error" }}</p>
+    {% endif %}
+
+    <p><strong>Events checked:</strong>
+        {{ report.audit_chain_verification.checked_events }}</p>
+
+    {% if report.audit_chain_verification.event_id %}
+        <p><strong>Related event ID:</strong>
+            {{ report.audit_chain_verification.event_id }}</p>
+    {% endif %}
+
+    <p class="muted">
+        This verification covers the global audit chain, which may include events
+        from other cases in the same database.
+    </p>
+
+    <h3>Signed checkpoint verification</h3>
+    {% if report.signed_checkpoint_verification is none %}
+        <p>No signed checkpoint has been created.</p>
+    {% elif report.signed_checkpoint_verification.valid %}
+        <p><strong>Status:</strong> Verified</p>
+    {% else %}
+        <p><strong>Status:</strong> Verification failed</p>
+        <p><strong>Problem:</strong>
+            {{ report.signed_checkpoint_verification.error or "Unknown verification error" }}</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>4. Audit trail ({{ report.audit_events|length }})</h2>
+    {% if report.audit_events %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Time (UTC)</th>
+                    <th>Event</th>
+                    <th>Evidence ID</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for event in report.audit_events %}
+                <tr>
+                    <td>{{ event.event_time }}</td>
+                    <td>{{ event.event_type }}</td>
+                    <td>{{ event.evidence_id or "—" }}</td>
+                    <td><pre>{{ event.details | tojson(indent=2) }}</pre></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No audit events are recorded.</p>
+    {% endif %}
+</section>
+
+<section>
+    <h2>5. Forensic limitations</h2>
+    <ul>
+        {% for limitation in report.limitations %}
+            <li>{{ limitation }}</li>
+        {% endfor %}
+    </ul>
+    <p class="muted">
+        Preserve original evidence and follow your organization's
+        evidence-handling and chain-of-custody procedures.
+    </p>
+</section>
+</body>
+</html>

@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*token*
+*secret*
+*.pem
+*.key
+credentials.json
+
+# Local databases and case data
+*.db
+*.sqlite
+*.sqlite3
+cases/*
+!cases/.gitkeep
+
+# Generated reports
+reports/*
+!reports/.gitkeep
+
+# Sample evidence: add only explicitly reviewed, harmless fixtures
+sample_data/*
+!sample_data/.gitkeep
+
+# Test and tool artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+
+# Python cache directories
+__pycache__/
+*.py[cod]
+
+# Local backups and recovery snapshots
+*.bak
+*.backup*
+backups/
+
+# Runtime logs and temporary files
+*.log
+*.tmp
+*.swp
+*~
+
+# Local development and test artifacts
+instance/
+
+# Temporary ignore-file backup
+.gitignore.before-readme
