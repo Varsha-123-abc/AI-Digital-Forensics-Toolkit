@@ -1,82 +1,120 @@
+
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Digital Forensics Toolkit</title>
+    <meta name="theme-color" content="#080e1b">
+    <title>Investigation Console | Digital Forensics Toolkit</title>
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 <header class="topbar">
     <div>
-        <p class="eyebrow">SECURITY INVESTIGATION WORKSPACE</p>
-        <h1>Digital Forensics Toolkit</h1>
-        <p class="muted">File evidence, metadata and investigation records</p>
+        <p class="eyebrow">DIGITAL FORENSICS / INVESTIGATION CONSOLE</p>
+        <h1>Evidence Investigation</h1>
+        <p class="muted">
+            Examine file evidence, validate integrity and maintain investigation records.
+        </p>
     </div>
-    <span class="status-pill">LOCAL MODE</span>
+    <span class="status-pill">● LOCAL MODE</span>
 </header>
 
 <main class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div class="notice {{ category }}">{{ message }}</div>
+          <div class="notice {{ category }}" role="status">
+              {{ message }}
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
 
-    <section class="stats">
-        <article class="panel stat">
-            <span class="muted">Investigation cases</span>
-            <strong>{{ cases|length }}</strong>
-        </article>
-        <article class="panel stat">
-            <span class="muted">Registered evidence items</span>
-            <strong>{{ evidence_count }}</strong>
-        </article>
+    <section aria-labelledby="overview-heading">
+        <p class="eyebrow">WORKSPACE OVERVIEW</p>
+        <h2 id="overview-heading">Investigation summary</h2>
+
+        <div class="stats">
+            <article class="panel stat">
+                <span class="muted">Total investigations</span>
+                <strong>{{ cases|length }}</strong>
+                <span class="muted">Cases registered in this workspace</span>
+            </article>
+
+            <article class="panel stat">
+                <span class="muted">Evidence items</span>
+                <strong>{{ evidence_count }}</strong>
+                <span class="muted">Evidence records registered</span>
+            </article>
+        </div>
     </section>
 
-    <section class="panel">
-        <h2>Create investigation</h2>
+    <section class="panel" aria-labelledby="create-heading">
+        <p class="eyebrow">CASE MANAGEMENT</p>
+        <h2 id="create-heading">Start an investigation</h2>
+        <p class="muted">
+            Create a case to organize evidence and preserve investigation activity.
+        </p>
+
         <form method="post" action="{{ url_for('new_case') }}">
-            <label for="title">Case title</label>
-            <input id="title" name="title" maxlength="200"
-                   placeholder="Suspicious file investigation" required>
+            <label for="title">Investigation title</label>
+            <input
+                id="title"
+                name="title"
+                maxlength="200"
+                placeholder="e.g. Suspicious file integrity review"
+                autocomplete="off"
+                required
+            >
 
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="3"
-                      maxlength="2000"
-                      placeholder="Record the investigation purpose"></textarea>
+            <label for="description">Investigation notes</label>
+            <textarea
+                id="description"
+                name="description"
+                rows="3"
+                maxlength="2000"
+                placeholder="Describe the purpose and scope of this investigation."
+            ></textarea>
 
-            <button type="submit">Create case</button>
+            <button type="submit">+ Create investigation</button>
         </form>
     </section>
 
-    <section class="panel">
-        <h2>Investigation cases</h2>
+    <section class="panel" aria-labelledby="cases-heading">
+        <p class="eyebrow">CASE REGISTER</p>
+        <h2 id="cases-heading">Investigation records</h2>
+        <p class="muted">
+            Open a case to review evidence, integrity checks and the audit trail.
+        </p>
+
         {% if cases %}
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th>Case ID</th>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Created (UTC)</th>
-                        <th></th>
+                        <th scope="col">Case identifier</th>
+                        <th scope="col">Investigation</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created (UTC)</th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for case in cases %}
                     <tr>
-                        <td>{{ case.case_id }}</td>
+                        <td>
+                            <code>{{ case.case_id }}</code>
+                        </td>
                         <td>{{ case.title }}</td>
-                        <td><span class="status-pill">{{ case.status }}</span></td>
+                        <td>
+                            <span class="status-pill">{{ case.status }}</span>
+                        </td>
                         <td>{{ case.created_at }}</td>
                         <td>
                             <a href="{{ url_for('case_detail', case_id=case.case_id) }}">
-                                Open case
+                                Open case →
                             </a>
                         </td>
                     </tr>
@@ -85,14 +123,23 @@
             </table>
         </div>
         {% else %}
-            <p class="muted">No cases created yet. Create your first investigation above.</p>
+        <div class="panel">
+            <h3>No investigations yet</h3>
+            <p class="muted">
+                Create your first case above to begin organizing forensic evidence.
+            </p>
+        </div>
         {% endif %}
     </section>
 
-    <p class="footnote">
-        Local investigation tool. No external threat-intelligence service is connected.
-        A lack of indicators does not establish that a file is safe.
-    </p>
+    <footer class="footnote">
+        <p>
+            <strong>Evidence handling notice:</strong>
+            This toolkit operates locally. No external threat-intelligence service
+            is connected. The absence of detected indicators does not prove that
+            a file is safe.
+        </p>
+    </footer>
 </main>
 </body>
 </html>

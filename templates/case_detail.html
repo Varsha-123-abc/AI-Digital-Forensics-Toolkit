@@ -10,39 +10,60 @@
 <body>
 <header class="topbar">
     <div>
-        <p class="eyebrow">INVESTIGATION CASE</p>
+        <p class="eyebrow">DIGITAL FORENSICS / CASE INVESTIGATION</p>
         <h1>{{ case.title }}</h1>
-        <p class="muted">{{ case.case_id }}</p>
+        <code class="case-id">{{ case.case_id }}</code>
     </div>
-    <a href="{{ url_for('dashboard') }}">← Dashboard</a>
+    <a href="{{ url_for('dashboard') }}">← Back to dashboard</a>
 </header>
 
 <main class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="notice {{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="notice {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
     {% endwith %}
 
-    <section class="panel">
-        <h2>Case overview</h2>
+    <section class="panel case-overview">
+        <div>
+            <p class="eyebrow">CASE SUMMARY</p>
+            <h2>Investigation overview</h2>
+            <p class="section-description">
+                Review the case details, access reports, and monitor evidence integrity.
+            </p>
+        </div>
+
         <p>{{ case.description or "No description provided." }}</p>
-        <p><strong>Status:</strong> {{ case.status }}</p>
-        <p><strong>Created (UTC):</strong> {{ case.created_at }}</p>
-        <p>
+
+        <div class="evidence-meta">
+            <div>
+                <span class="meta-label">Case status</span>
+                <span class="meta-value">{{ case.status }}</span>
+            </div>
+            <div>
+                <span class="meta-label">Created (UTC)</span>
+                <span class="meta-value">{{ case.created_at }}</span>
+            </div>
+            <div>
+                <span class="meta-label">Evidence records</span>
+                <span class="meta-value">{{ evidence|length }}</span>
+            </div>
+        </div>
+
+        <div class="case-actions">
             <a href="{{ url_for('export_case_report', case_id=case.case_id) }}">
-                Download forensic report (JSON)
+                Download JSON report
             </a>
-            <br>
             <a href="{{ url_for('export_case_html_report', case_id=case.case_id) }}">
-                Download forensic report (HTML)
+                Download HTML report
             </a>
-        </p>
+        </div>
     </section>
 
-    <section class="panel">
+    <section class="panel security-panel{% if not audit_chain_status.valid %} failure{% endif %}">
+        <p class="eyebrow">SECURITY VERIFICATION</p>
         <h2>Audit-chain integrity</h2>
 
         {% if audit_chain_status.valid %}
@@ -51,12 +72,11 @@
                 <span class="integrity-status">Valid</span>
             </p>
             <p>
-                Verified events:
+                <strong>Verified events:</strong>
                 {{ audit_chain_status.checked_events }}
             </p>
             <p class="muted">
-                All checked audit-event hashes and previous-event links
-                are consistent.
+                All checked audit-event hashes and previous-event links are consistent.
             </p>
         {% else %}
             <p>
@@ -64,22 +84,24 @@
                 <span class="integrity-status">Integrity check failed</span>
             </p>
             <p>
-                Events checked before failure:
+                <strong>Events checked before failure:</strong>
                 {{ audit_chain_status.checked_events }}
             </p>
+            <p><strong>Problem:</strong> {{ audit_chain_status.error }}</p>
             <p>
-                Problem:
-                {{ audit_chain_status.error }}
-            </p>
-            <p>
-                Event ID:
+                <strong>Event ID:</strong>
                 {{ audit_chain_status.event_id or "Unavailable" }}
             </p>
         {% endif %}
     </section>
 
-    <section class="panel">
+    <section class="panel security-panel{% if checkpoint_status is not none and not checkpoint_status.valid %} failure{% endif %}">
+        <p class="eyebrow">AUDIT PROTECTION</p>
         <h2>Signed audit checkpoint</h2>
+        <p class="section-description">
+            Checkpoints cover the global audit chain. Creating a checkpoint will not
+            overwrite an existing checkpoint.
+        </p>
 
         {% if checkpoint_status is none %}
             <p>No checkpoint has been created yet.</p>
@@ -94,77 +116,105 @@
                 <strong>Status:</strong>
                 <span class="integrity-status">Verification failed</span>
             </p>
-            <p>Problem: {{ checkpoint_status.error or "Unknown verification error" }}</p>
+            <p>
+                <strong>Problem:</strong>
+                {{ checkpoint_status.error or "Unknown verification error" }}
+            </p>
         {% endif %}
 
-        <p class="muted">
-            Checkpoints cover the global audit chain. Creating a checkpoint
-            will not overwrite an existing checkpoint.
-        </p>
+        <div class="checkpoint-actions">
+            <form method="post"
+                  action="{{ url_for('create_audit_checkpoint_route', case_id=case.case_id) }}">
+                <button type="submit">Create signed checkpoint</button>
+            </form>
 
-        <form method="post"
-              action="{{ url_for('create_audit_checkpoint_route', case_id=case.case_id) }}">
-            <button type="submit">Create signed checkpoint</button>
-        </form>
-
-        <form method="post"
-              action="{{ url_for('verify_audit_checkpoint_route', case_id=case.case_id) }}">
-            <button type="submit">Verify checkpoint</button>
-        </form>
+            <form method="post"
+                  action="{{ url_for('verify_audit_checkpoint_route', case_id=case.case_id) }}">
+                <button type="submit">Verify checkpoint</button>
+            </form>
+        </div>
     </section>
 
-
     <section class="panel">
+        <p class="eyebrow">EVIDENCE COLLECTION</p>
         <h2>Analyze a local file</h2>
-        <p class="muted">
-            Enter the full path to a file you are authorized to examine.
-            The application reads the file to calculate its hash and metadata.
+        <p class="section-description">
+            Enter the full path to a file you are authorized to examine. The application
+            reads the file to calculate its hash and metadata.
         </p>
+
         <form method="post"
               action="{{ url_for('analyze_evidence', case_id=case.case_id) }}">
             <label for="file_path">Absolute file path</label>
-            <input id="file_path" name="file_path"
-                   placeholder="/home/varsha/AI-Digital-Forensics-Toolkit/sample_data/forensic_sample.txt"
-                   required>
+            <input
+                id="file_path"
+                name="file_path"
+                placeholder="/home/varsha/AI-Digital-Forensics-Toolkit/sample_data/forensic_sample.txt"
+                required
+            >
             <button type="submit">Analyze and register evidence</button>
         </form>
     </section>
 
     <section class="panel">
-        <h2>Evidence records ({{ evidence|length }})</h2>
+        <div class="evidence-heading">
+            <div>
+                <p class="eyebrow">COLLECTED ARTIFACTS</p>
+                <h2>Evidence records ({{ evidence|length }})</h2>
+            </div>
+        </div>
+
         {% if evidence %}
             {% for item in evidence %}
                 <article class="evidence">
                     <h3>{{ item.file_name }}</h3>
-                    <p><strong>Evidence ID:</strong> {{ item.evidence_id }}</p>
-                    <p><strong>Path:</strong> <code>{{ item.file_path }}</code></p>
-                    <p><strong>Size:</strong> {{ item.file_size_bytes }} bytes</p>
-                    <p><strong>SHA-256:</strong></p>
-                    <code class="hash">{{ item.sha256 }}</code>
-                    <p><strong>Collected (UTC):</strong> {{ item.collected_at }}</p>
-<p>
-    <strong>Integrity status:</strong>
-    {% set integrity = integrity_statuses[item.evidence_id] %}
-    <span class="integrity-status">
-        {{ integrity.status }}
-    </span>
-</p>
 
-{% if integrity.event_time %}
-    <p>
-        <strong>Last verified (UTC):</strong>
-        {{ integrity.event_time }}
-    </p>
-    <p class="muted">{{ integrity.message }}</p>
-{% else %}
-    <p class="muted">{{ integrity.message }}</p>
-{% endif %}
+                    <div class="evidence-meta">
+                        <div>
+                            <span class="meta-label">Evidence ID</span>
+                            <span class="meta-value">{{ item.evidence_id }}</span>
+                        </div>
+                        <div>
+                            <span class="meta-label">File size</span>
+                            <span class="meta-value">{{ item.file_size_bytes }} bytes</span>
+                        </div>
+                        <div>
+                            <span class="meta-label">Collected (UTC)</span>
+                            <span class="meta-value">{{ item.collected_at }}</span>
+                        </div>
+                    </div>
+
+                    <p><strong>File path</strong></p>
+                    <code>{{ item.file_path }}</code>
+
+                    <p><strong>SHA-256 fingerprint</strong></p>
+                    <code class="hash">{{ item.sha256 }}</code>
+
+                    {% set integrity = integrity_statuses[item.evidence_id] %}
+
+                    <div class="security-panel">
+                        <p>
+                            <strong>Integrity status:</strong>
+                            <span class="integrity-status">{{ integrity.status }}</span>
+                        </p>
+
+                        {% if integrity.event_time %}
+                            <p>
+                                <strong>Last verified (UTC):</strong>
+                                {{ integrity.event_time }}
+                            </p>
+                        {% endif %}
+
+                        <p class="muted">{{ integrity.message }}</p>
+                    </div>
+
                     <form method="post"
                           action="{{ url_for('verify_evidence',
                               case_id=case.case_id,
                               evidence_id=item.evidence_id) }}">
                         <button type="submit">Verify evidence integrity</button>
                     </form>
+
                     <details>
                         <summary>View collected metadata and indicators</summary>
                         <pre>{{ item.metadata_json|pretty_json }}</pre>
@@ -172,31 +222,51 @@
                 </article>
             {% endfor %}
         {% else %}
-            <p class="muted">No evidence registered to this case yet.</p>
+            <div class="empty-state">
+                <h3>No evidence registered yet</h3>
+                <p class="muted">
+                    Analyze an authorized local file above to add the first evidence record.
+                </p>
+            </div>
         {% endif %}
     </section>
 
     <section class="panel">
+        <p class="eyebrow">ACTIVITY &amp; ACCOUNTABILITY</p>
         <h2>Audit trail ({{ events|length }})</h2>
+        <p class="section-description">
+            Recorded events provide a chronological record of investigation activity.
+        </p>
+
         {% if events %}
             <div class="table-wrap">
                 <table>
                     <thead>
-                        <tr><th>Time (UTC)</th><th>Event</th><th>Details</th></tr>
+                        <tr>
+                            <th>Time (UTC)</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {% for event in events %}
-                        <tr>
-                            <td>{{ event.event_time }}</td>
-                            <td>{{ event.event_type }}</td>
-                            <td><code>{{ event.details_json }}</code></td>
-                        </tr>
-                    {% endfor %}
+                        {% for event in events %}
+                            <tr>
+                                <td>{{ event.event_time }}</td>
+                                <td>{{ event.event_type }}</td>
+                                <td>
+                                    <div class="audit-details">
+                                        <code>{{ event.details_json }}</code>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         {% else %}
-            <p class="muted">No audit events recorded.</p>
+            <div class="empty-state">
+                <p class="muted">No audit events recorded.</p>
+            </div>
         {% endif %}
     </section>
 </main>

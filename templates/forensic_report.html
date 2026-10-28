@@ -4,188 +4,629 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Forensic Report — {{ report.case.case_id }}</title>
+
     <style>
+        :root {
+            color-scheme: light;
+            --bg: #f2f5fa;
+            --surface: #ffffff;
+            --text: #172238;
+            --muted: #617087;
+            --border: #dce4ee;
+            --accent: #087f8c;
+            --accent-light: #e5f6f5;
+            --success: #16794b;
+            --success-bg: #e9f8ef;
+            --danger: #b42332;
+            --danger-bg: #fff0f0;
+            --warning: #8a5b00;
+            --warning-bg: #fff7e4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-            color: #202938;
-            line-height: 1.6;
+            margin: 0;
+            padding: 32px 20px 56px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.65;
         }
-        header, section {
-            border: 1px solid #d7dde5;
-            border-radius: 8px;
+
+        .report {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .report-header,
+        .report-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 22px;
+            padding: 26px;
+            box-shadow: 0 4px 18px rgba(24, 39, 75, 0.04);
+        }
+
+        .report-header {
+            border-top: 5px solid var(--accent);
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        h1, h2, h3, h4 {
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        h1 {
+            font-size: clamp(26px, 4vw, 36px);
+            letter-spacing: -0.8px;
+            margin: 0 0 18px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin: 0 0 18px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin: 22px 0 12px;
+        }
+
+        h4 {
+            font-size: 14px;
+            margin: 20px 0 8px;
+        }
+
+        p {
+            overflow-wrap: anywhere;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .header-meta,
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .meta-card,
+        .summary-item {
+            background: #f7f9fc;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            min-width: 0;
+            padding: 13px 15px;
+        }
+
+        .meta-label {
+            color: var(--muted);
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            display: block;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .case-id {
+            font-family: "Courier New", monospace;
+            overflow-wrap: anywhere;
+        }
+
+        .notice {
+            background: var(--warning-bg);
+            border: 1px solid #efd89b;
+            border-radius: 9px;
+            color: #694900;
+            margin-top: 18px;
+            padding: 13px 15px;
+        }
+
+        .section-number {
+            color: var(--accent);
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 7px;
+        }
+
+        .evidence-card {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            margin-top: 18px;
             padding: 20px;
-            margin-bottom: 20px;
+            break-inside: avoid;
         }
-        header { background: #f3f6fa; }
-        h1, h2 { color: #17365d; }
-        .muted { color: #596579; }
-        .hash { overflow-wrap: anywhere; }
-        pre {
-            white-space: pre-wrap;
+
+        .evidence-card h3 {
+            margin-top: 0;
+        }
+
+        .field {
+            margin: 10px 0;
+        }
+
+        .field strong {
+            display: inline-block;
+            min-width: 145px;
+        }
+
+        code {
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+        }
+
+        .hash,
+        .path-value {
+            background: #f3f6fa;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            display: block;
+            margin: 8px 0 14px;
             overflow-wrap: anywhere;
-            background: #f5f7fa;
             padding: 12px;
-            border-radius: 5px;
+            word-break: break-word;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+
+        .status {
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+        }
+
+        .status-valid {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .status-failed {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .status-pending {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .verification-panel {
+            background: #f7f9fc;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            margin-top: 16px;
+            padding: 15px;
+        }
+
+        .verification-panel h3 {
+            margin-top: 0;
+        }
+
+        pre {
+            background: #f5f7fa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: "Courier New", monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            margin: 10px 0;
+            max-width: 100%;
             overflow-wrap: anywhere;
+            overflow-x: auto;
+            padding: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
+
+        .table-wrap {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 650px;
+            table-layout: fixed;
+            width: 100%;
+        }
+
         th, td {
+            border: 1px solid var(--border);
+            overflow-wrap: anywhere;
+            padding: 11px;
             text-align: left;
             vertical-align: top;
-            border: 1px solid #d7dde5;
-            padding: 9px;
         }
-        th { background: #f3f6fa; }
+
+        th {
+            background: #edf3f8;
+            color: #253b54;
+            font-size: 11px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        td pre {
+            max-width: 100%;
+        }
+
+        .empty-state {
+            background: #f7f9fc;
+            border: 1px dashed #c8d4e2;
+            border-radius: 9px;
+            color: var(--muted);
+            padding: 18px;
+        }
+
+        .limitations li {
+            margin: 8px 0;
+            padding-left: 4px;
+        }
+
+        .report-footer {
+            color: var(--muted);
+            font-size: 12px;
+            padding: 4px 4px 0;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px 10px 30px;
+            }
+
+            .report-header,
+            .report-section {
+                border-radius: 10px;
+                padding: 17px;
+            }
+
+            .header-meta,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .evidence-card {
+                padding: 14px;
+            }
+
+            .field strong {
+                display: block;
+                min-width: 0;
+            }
+        }
+
         @media print {
-            body { max-width: none; margin: 0; }
-            header, section { break-inside: avoid; }
+            @page {
+                margin: 15mm;
+                size: auto;
+            }
+
+            body {
+                background: #ffffff;
+                color: #111827;
+                font-size: 10pt;
+                margin: 0;
+                padding: 0;
+            }
+
+            .report {
+                max-width: none;
+            }
+
+            .report-header,
+            .report-section {
+                box-shadow: none;
+                margin-bottom: 12px;
+                padding: 16px;
+            }
+
+            .report-header,
+            .report-section,
+            .evidence-card,
+            .verification-panel,
+            .meta-card,
+            .summary-item {
+                background: #ffffff;
+                break-inside: auto;
+            }
+
+            .evidence-card {
+                break-inside: avoid;
+                margin-top: 12px;
+            }
+
+            h1, h2, h3, h4 {
+                break-after: avoid;
+            }
+
+            table, pre {
+                break-inside: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr {
+                break-inside: avoid;
+            }
+
+            .hash,
+            .path-value,
+            pre {
+                overflow: visible;
+                white-space: pre-wrap;
+            }
+
+            .report-footer {
+                margin-top: 15px;
+            }
         }
     </style>
 </head>
+
 <body>
-<header>
-    <h1>Digital Forensics Case Report</h1>
-    <p><strong>Case ID:</strong> {{ report.case.case_id }}</p>
-    <p><strong>Generated (UTC):</strong>
-       {{ report.report_generated_at_utc }}</p>
-    <p class="muted">
-        This report summarizes records stored in the toolkit.
-        It is not, by itself, proof of a forensic conclusion.
-    </p>
-</header>
+<div class="report">
+    <header class="report-header">
+        <p class="eyebrow">Digital Forensics Toolkit / Investigation Record</p>
+        <h1>Digital Forensics Case Report</h1>
 
-<section>
-    <h2>1. Case overview</h2>
-    <p><strong>Title:</strong> {{ report.case.title }}</p>
-    <p><strong>Description:</strong>
-       {{ report.case.description or "No description provided." }}</p>
-    <p><strong>Status:</strong> {{ report.case.status }}</p>
-    <p><strong>Created (UTC):</strong> {{ report.case.created_at }}</p>
-    <p><strong>Updated (UTC):</strong> {{ report.case.updated_at }}</p>
-</section>
+        <div class="header-meta">
+            <div class="meta-card">
+                <span class="meta-label">Case ID</span>
+                <span class="meta-value case-id">{{ report.case.case_id }}</span>
+            </div>
+            <div class="meta-card">
+                <span class="meta-label">Report generated (UTC)</span>
+                <span class="meta-value">{{ report.report_generated_at_utc }}</span>
+            </div>
+        </div>
 
-<section>
-    <h2>2. Evidence inventory ({{ report.evidence|length }})</h2>
-    {% if report.evidence %}
-        {% for item in report.evidence %}
-            <article>
-                <h3>{{ item.file_name }}</h3>
-                <p><strong>Evidence ID:</strong> {{ item.evidence_id }}</p>
-                <p><strong>Recorded path:</strong>
-                   <code>{{ item.file_path }}</code></p>
-                <p><strong>Size:</strong> {{ item.file_size_bytes }} bytes</p>
-                <p><strong>MIME type guess:</strong>
-                   {{ item.mime_type_guess }}</p>
-                <p><strong>Collected (UTC):</strong>
-                   {{ item.collected_at }}</p>
-                <p><strong>SHA-256:</strong></p>
-                <code class="hash">{{ item.sha256 }}</code>
-               {% set integrity = report.evidence_integrity_statuses.get(item.evidence_id, {}) %}
-<p><strong>Integrity status:</strong>
-    {{ integrity.get("status", "Not verified") }}</p>
+        <div class="notice">
+            <strong>Evidence note:</strong>
+            This report summarizes records stored in the toolkit.
+            It is not, by itself, proof of a forensic conclusion.
+        </div>
+    </header>
 
-{% if integrity.get("message") %}
-<p><strong>Verification details:</strong>
-    {{ integrity.get("message") }}</p>
-{% endif %}
+    <section class="report-section">
+        <p class="eyebrow">Case information</p>
+        <h2><span class="section-number">01</span>Case overview</h2>
 
-{% if integrity.get("event_time") %}
-<p><strong>Last verification (UTC):</strong>
-    {{ integrity.get("event_time") }}</p>
-{% endif %}
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="meta-label">Title</span>
+                <span class="meta-value">{{ report.case.title }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value">{{ report.case.status }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="meta-label">Created (UTC)</span>
+                <span class="meta-value">{{ report.case.created_at }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="meta-label">Updated (UTC)</span>
+                <span class="meta-value">{{ report.case.updated_at }}</span>
+            </div>
+        </div>
 
-                <h4>Metadata and indicator findings</h4>
-                <pre>{{ item.metadata | tojson(indent=2) }}</pre>
-            </article>
-            {% if not loop.last %}<hr>{% endif %}
-        {% endfor %}
-    {% else %}
-        <p>No evidence is registered to this case.</p>
-    {% endif %}
-</section>
+        <p><strong>Description</strong></p>
+        <p>{{ report.case.description or "No description provided." }}</p>
+    </section>
 
-<section>
-    <h2>3. Integrity and verification summary</h2>
+    <section class="report-section">
+        <p class="eyebrow">Collected artifacts</p>
+        <h2><span class="section-number">02</span>Evidence inventory ({{ report.evidence|length }})</h2>
 
-    <h3>Audit-chain verification</h3>
-    {% if report.audit_chain_verification.valid %}
-        <p><strong>Status:</strong> Valid</p>
-    {% else %}
-        <p><strong>Status:</strong> Verification failed</p>
-        <p><strong>Problem:</strong>
-            {{ report.audit_chain_verification.error or "Unknown verification error" }}</p>
-    {% endif %}
+        {% if report.evidence %}
+            {% for item in report.evidence %}
+                <article class="evidence-card">
+                    <h3>{{ item.file_name }}</h3>
 
-    <p><strong>Events checked:</strong>
-        {{ report.audit_chain_verification.checked_events }}</p>
+                    <p class="field">
+                        <strong>Evidence ID:</strong> {{ item.evidence_id }}
+                    </p>
+                    <p class="field">
+                        <strong>Recorded path:</strong>
+                    </p>
+                    <code class="path-value">{{ item.file_path }}</code>
 
-    {% if report.audit_chain_verification.event_id %}
-        <p><strong>Related event ID:</strong>
-            {{ report.audit_chain_verification.event_id }}</p>
-    {% endif %}
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="meta-label">File size</span>
+                            <span class="meta-value">{{ item.file_size_bytes }} bytes</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="meta-label">MIME type guess</span>
+                            <span class="meta-value">{{ item.mime_type_guess }}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="meta-label">Collected (UTC)</span>
+                            <span class="meta-value">{{ item.collected_at }}</span>
+                        </div>
+                    </div>
 
-    <p class="muted">
-        This verification covers the global audit chain, which may include events
-        from other cases in the same database.
-    </p>
+                    <p><strong>SHA-256 fingerprint</strong></p>
+                    <code class="hash">{{ item.sha256 }}</code>
 
-    <h3>Signed checkpoint verification</h3>
-    {% if report.signed_checkpoint_verification is none %}
-        <p>No signed checkpoint has been created.</p>
-    {% elif report.signed_checkpoint_verification.valid %}
-        <p><strong>Status:</strong> Verified</p>
-    {% else %}
-        <p><strong>Status:</strong> Verification failed</p>
-        <p><strong>Problem:</strong>
-            {{ report.signed_checkpoint_verification.error or "Unknown verification error" }}</p>
-    {% endif %}
-</section>
+                    {% set integrity = report.evidence_integrity_statuses.get(item.evidence_id, {}) %}
 
-<section>
-    <h2>4. Audit trail ({{ report.audit_events|length }})</h2>
-    {% if report.audit_events %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Time (UTC)</th>
-                    <th>Event</th>
-                    <th>Evidence ID</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for event in report.audit_events %}
-                <tr>
-                    <td>{{ event.event_time }}</td>
-                    <td>{{ event.event_type }}</td>
-                    <td>{{ event.evidence_id or "—" }}</td>
-                    <td><pre>{{ event.details | tojson(indent=2) }}</pre></td>
-                </tr>
+                    <div class="verification-panel">
+                        <h3>Evidence integrity</h3>
+                        {% set integrity_status = integrity.get("status", "Not verified") %}
+                        {% set integrity_status_lower = integrity_status|string|lower %}
+
+                        <p>
+                            <strong>Status:</strong>
+                            {% if "fail" in integrity_status_lower or "invalid" in integrity_status_lower or "mismatch" in integrity_status_lower %}
+                                <span class="status status-failed">{{ integrity_status }}</span>
+                            {% elif "valid" in integrity_status_lower or "verified" in integrity_status_lower or "intact" in integrity_status_lower %}
+                                <span class="status status-valid">{{ integrity_status }}</span>
+                            {% else %}
+                                <span class="status status-pending">{{ integrity_status }}</span>
+                            {% endif %}
+                        </p>
+
+                        {% if integrity.get("message") %}
+                            <p><strong>Verification details:</strong>
+                                {{ integrity.get("message") }}</p>
+                        {% endif %}
+
+                        {% if integrity.get("event_time") %}
+                            <p><strong>Last verification (UTC):</strong>
+                                {{ integrity.get("event_time") }}</p>
+                        {% endif %}
+                    </div>
+
+                    <h4>Metadata and indicator findings</h4>
+                    <pre>{{ item.metadata | tojson(indent=2) }}</pre>
+                </article>
             {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No audit events are recorded.</p>
-    {% endif %}
-</section>
+        {% else %}
+            <div class="empty-state">
+                No evidence is registered to this case.
+            </div>
+        {% endif %}
+    </section>
 
-<section>
-    <h2>5. Forensic limitations</h2>
-    <ul>
-        {% for limitation in report.limitations %}
-            <li>{{ limitation }}</li>
-        {% endfor %}
-    </ul>
-    <p class="muted">
-        Preserve original evidence and follow your organization's
-        evidence-handling and chain-of-custody procedures.
-    </p>
-</section>
+    <section class="report-section">
+        <p class="eyebrow">Integrity controls</p>
+        <h2><span class="section-number">03</span>Integrity and verification summary</h2>
+
+        <div class="verification-panel">
+            <h3>Audit-chain verification</h3>
+
+            {% if report.audit_chain_verification.valid %}
+                <p><strong>Status:</strong>
+                    <span class="status status-valid">Valid</span>
+                </p>
+            {% else %}
+                <p><strong>Status:</strong>
+                    <span class="status status-failed">Verification failed</span>
+                </p>
+                <p><strong>Problem:</strong>
+                    {{ report.audit_chain_verification.error or "Unknown verification error" }}</p>
+            {% endif %}
+
+            <p><strong>Events checked:</strong>
+                {{ report.audit_chain_verification.checked_events }}</p>
+
+            {% if report.audit_chain_verification.event_id %}
+                <p><strong>Related event ID:</strong>
+                    {{ report.audit_chain_verification.event_id }}</p>
+            {% endif %}
+
+            <p class="muted">
+                This verification covers the global audit chain, which may include
+                events from other cases in the same database.
+            </p>
+        </div>
+
+        <div class="verification-panel">
+            <h3>Signed checkpoint verification</h3>
+
+            {% if report.signed_checkpoint_verification is none %}
+                <p><span class="status status-pending">No checkpoint</span></p>
+                <p>No signed checkpoint has been created.</p>
+            {% elif report.signed_checkpoint_verification.valid %}
+                <p><strong>Status:</strong>
+                    <span class="status status-valid">Verified</span>
+                </p>
+            {% else %}
+                <p><strong>Status:</strong>
+                    <span class="status status-failed">Verification failed</span>
+                </p>
+                <p><strong>Problem:</strong>
+                    {{ report.signed_checkpoint_verification.error or "Unknown verification error" }}</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="report-section">
+        <p class="eyebrow">Investigation activity</p>
+        <h2><span class="section-number">04</span>Audit trail ({{ report.audit_events|length }})</h2>
+
+        {% if report.audit_events %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time (UTC)</th>
+                            <th>Event</th>
+                            <th>Evidence ID</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in report.audit_events %}
+                            <tr>
+                                <td>{{ event.event_time }}</td>
+                                <td>{{ event.event_type }}</td>
+                                <td>{{ event.evidence_id or "—" }}</td>
+                                <td><pre>{{ event.details | tojson(indent=2) }}</pre></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No audit events are recorded.
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="report-section limitations">
+        <p class="eyebrow">Scope and handling</p>
+        <h2><span class="section-number">05</span>Forensic limitations</h2>
+
+        <ul>
+            {% for limitation in report.limitations %}
+                <li>{{ limitation }}</li>
+            {% endfor %}
+        </ul>
+
+        <p class="muted">
+            Preserve original evidence and follow your organization's
+            evidence-handling and chain-of-custody procedures.
+        </p>
+    </section>
+
+    <footer class="report-footer">
+        <p>
+            Digital Forensics Toolkit · Case
+            <span class="case-id">{{ report.case.case_id }}</span>
+        </p>
+        <p>Report timestamps are displayed in UTC where specified.</p>
+    </footer>
+</div>
 </body>
 </html>
