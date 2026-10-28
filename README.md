@@ -131,3 +131,29 @@ This is a learning and portfolio project, not a certified or independently valid
 ## License
 
 No license has been specified. Add an appropriate license before permitting others to reuse, modify, or redistribute the project.
+## Screenshots
+
+### 1. Dashboard
+The main dashboard for accessing digital forensic case management and analysis features.
+
+![Dashboard](screenshots/dashboard.png)
+
+### 2. Case Details
+Displays forensic case information and registered evidence.
+
+![Case Details](screenshots/case-details.png)
+
+### 3. Evidence Integrity Verification
+Shows evidence integrity verification results, helping investigators identify modified or unavailable evidence.
+
+![Evidence Integrity Verification](screenshots/integrity-verification.png)
+
+### 4. Forensic HTML Report
+An HTML report containing case information and an evidence inventory.
+
+![Forensic HTML Report](screenshots/forensic-report.png)
+
+### 5. JSON Report
+A machine-readable JSON export of forensic case information.
+
+![JSON Report](screenshots/json-report.png)
